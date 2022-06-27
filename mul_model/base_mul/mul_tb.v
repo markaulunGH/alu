@@ -16,12 +16,15 @@ module mul_tb;
 	wire out_valid;
 
 	// Instantiate the Unit Under Test (UUT)
-	mul uut (
-		.mul_clk(mul_clk), 
-		.resetn(resetn), 
-		.mul_signed(mul_signed), 
-		.x(x), 
-		.y(y), 
+	basemul uut (
+		.clk(mul_clk), 
+		.reset (!resetn), 
+//		.mul_signed(), 
+		.src2({mul_signed & x[31],x}), 
+		.src1({mul_signed & y[31],y}), 
+		.in_valid(in_valid),
+		.in_ready(in_ready),
+		.out_valid(out_valid),
 		.result(result)
 	);
 
@@ -77,16 +80,16 @@ assign result_ref = x_e * y_e;
 assign ok         = (result_ref == result);
 
 //打印运算结果
-initial begin
+/*initial begin
     $monitor("x = %d, y = %d, signed = %d, result = %d,OK=%b",x_e,y_e,mul_signed_r,result,ok);
-end
+end*/
 
 //判断结果是否正确
 always @(posedge mul_clk)
 begin
 	if (!ok && out_valid)
     begin
-	    $display("Error：x = %d, y = %d,result = %d, result_ref = %d, OK=%b",x_e,y_e,result,result_ref,ok);
+	    $display("Error：x_r = %h, y_r = %h,result = %h, result_ref = %h, OK=%b",x_e,y_e,result,result_ref,ok);
 	    $finish;
 	end
 end

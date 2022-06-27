@@ -1,21 +1,23 @@
 module basemul(
   input                          clk           ,
   input                          reset         ,
-  input  [31:0] src1,
-  input  [31:0] src2,
+  input  [32:0] src1,
+  input  [32:0] src2,
   input         in_valid,
+//  input         mul_signed,
   output reg    in_ready,
   output reg    out_valid,
   output [63:0] result
 
 );
 
-reg [63:0] tem_result, multiplicand;
-reg [31:0] multiplier;
+reg [65:0] tem_result, multiplicand;
+reg [32:0] multiplier;
+reg [5:0]   count;
 reg doing;
 
-wire calculate_done,ready_to_doing,doing_to_done,done_to_ready;
-wire [63:0] mid_result;
+wire calculate_done,ready_to_doing,doing_to_done,done_to_ready,last_op;
+wire [65:0] mid_result;
 assign ready_to_doing = in_valid && in_ready;
 assign doing_to_done  = calculate_done;
 assign done_to_ready  = out_valid;
@@ -35,14 +37,16 @@ end
 always @(posedge clk) begin
     if (reset ) begin
         out_valid <=1'b0;
+    end   
+    else if (done_to_ready)  begin
+        out_valid <=1'b0;
     end
+
     else if (doing_to_done ) begin
         out_valid <= 1'b1;
     end
     //Done signal remains for one cycle
-    else begin
-        out_valid <=1'b0;
-    end
+ 
     
 end
 
@@ -60,11 +64,11 @@ end
 
 always @(posedge clk) begin
     if (ready_to_doing ) begin
-        multiplicand <= {{32{src2[31]}},src2};
+        multiplicand <= {{33{src2[32]}},src2};
     end
     //shift left  << 1
     else if (doing) begin
-        multiplicand <= {multiplicand[62:0],1'b0};
+        multiplicand <= {multiplicand[64:0],1'b0};
     end
 end
 
@@ -74,30 +78,45 @@ always @(posedge clk) begin
     end
     //shift right >> 1
     else if (doing) begin 
-        multiplier[31:0] <= {1'b0,multiplier[31:1]};
+        multiplier[32:0] <= {1'b0,multiplier[32:1]};
     end
     
 end
 
-assign calculate_done = multiplier == 32'h0;
-assign mid_result = multiplicand & {64{multiplier[0]}};
+always @(posedge clk) begin
+    if (reset || ready_to_doing || done_to_ready) begin
+        count <= 6'h0;
+    end
+    else if (doing) begin
+        count <= count + 1'h1;
+    end
+    
+end
 
-// 64-bit adder
-wire [63:0] adder_a;
-wire [63:0] adder_b;
-wire [63:0] adder_cin;
-wire [63:0] adder_result;
+assign calculate_done = count[5:0] == 6'h20 && doing;
+assign last_op        = count[5:0] == 6'h20 && doing;
+assign mid_result = multiplicand & {66{multiplier[0]}};
+
+// 66-bit adder
+wire [65:0] adder_a;
+wire [65:0] adder_b;
+wire         adder_cin;
+wire [65:0] adder_result;
 wire        adder_cout;
 
-assign adder_a   = mid_result;
+assign adder_a   = last_op ? ~mid_result : mid_result;
 assign adder_b   = tem_result;
-assign adder_cin = 64'h0;
-assign {adder_cout, adder_result} = adder_a + adder_b + adder_cin;
+assign adder_cin = last_op ? 1'h1 : 1'h0;
+assign {adder_cout, adder_result} = adder_a + adder_b + {65'b0,adder_cin};
 
 always @(posedge clk) begin
-    if (doing) begin
+    if (ready_to_doing) begin
+        tem_result <=66'b0;
+    end
+    else if (doing) begin
     tem_result <= adder_result;
     end
 end
+assign result = tem_result[63:0];
 
 endmodule
