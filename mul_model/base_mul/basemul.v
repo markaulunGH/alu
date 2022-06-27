@@ -4,15 +4,15 @@ module basemul(
   input  [31:0] src1,
   input  [31:0] src2,
   input         in_valid,
-  output        in_ready,
-  output        out_valid,
-  output [63:0] result,
+  output reg    in_ready,
+  output reg    out_valid,
+  output [63:0] result
 
 );
 
 reg [63:0] tem_result, multiplicand;
 reg [31:0] multiplier;
-reg in_ready,out_valid,doing;
+reg doing;
 
 wire calculate_done,ready_to_doing,doing_to_done,done_to_ready;
 wire [63:0] mid_result;
@@ -59,8 +59,8 @@ always @(posedge clk) begin
 end
 
 always @(posedge clk) begin
-    if (ready_to_dong ) begin
-        multiplicand <= {32{src2[31]},src2};
+    if (ready_to_doing ) begin
+        multiplicand <= {{32{src2[31]}},src2};
     end
     //shift left  << 1
     else if (doing) begin
@@ -74,7 +74,7 @@ always @(posedge clk) begin
     end
     //shift right >> 1
     else if (doing) begin 
-        multiplier[31:0] <= {1'b0,multiplier[31;1]};
+        multiplier[31:0] <= {1'b0,multiplier[31:1]};
     end
     
 end
@@ -99,3 +99,5 @@ always @(posedge clk) begin
     tem_result <= adder_result;
     end
 end
+
+endmodule
