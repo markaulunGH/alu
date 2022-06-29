@@ -131,12 +131,13 @@ always @(posedge div_clk)
 begin
     if (complete && div) //除法完成
     begin
-	     if (s_ok && r_ok)
+	  /*   if (s_ok && r_ok)
 		  begin
 		      $display("[time@%t]: x=%x, y=%x, signed=%x, s=%x, r=%x, s_OK=%b, r_OK=%b",
                       $time,x_d,y_d,div_signed,s_d,r_d,s_ok,r_ok);
 		  end
-		  else
+		  else */
+		  if (~(s_ok && r_ok))
 		  begin
 		      $display("[time@%t]Error: x=%x, y=%x, signed=%x, s=%x, r=%x, s_ref=%x, r_ref=%x, s_OK=%b, r_OK=%b",
                       $time,x_d,y_d,div_signed,s_d,r_d,s_ref_d,r_ref_d,s_ok,r_ok);

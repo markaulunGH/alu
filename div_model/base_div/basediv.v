@@ -144,7 +144,6 @@ assign remain_need_correct  = dividend_s;
 
 always @(posedge clk ) begin
     if (op_correct) begin
-       // qutient <= qutient_need_correct ? qutient_correct : qutient; 
         remain  <= remain_need_correct  ? remain_correct  : dividend[63:32];
     end
    if (op_correct) begin
