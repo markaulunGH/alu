@@ -1,6 +1,6 @@
 module basemul(
-  input                          clk           ,
-  input                          reset         ,
+  input               clk           ,
+  input               reset         ,
   input  [32:0] src1,
   input  [32:0] src2,
   input         in_valid,
