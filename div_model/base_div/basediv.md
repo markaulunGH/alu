@@ -93,3 +93,9 @@ assign remain_need_correct  = dividend_s;
 迭代除法容易出现一堆零，可以考虑提前开始或者提前结束
 
 更多。。。
+
+
+
+
+
+此文章参考《CPU设计实战》第五章

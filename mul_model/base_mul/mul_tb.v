@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-
+//此tb为《CPU设计实战》实验tb,修改了部分内容
 module mul_tb;
 
 	// Inputs

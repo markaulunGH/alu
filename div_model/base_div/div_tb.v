@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-
+//此tb为《CPU设计实战》实验tb
 module div_tb;
 
 	// Inputs
