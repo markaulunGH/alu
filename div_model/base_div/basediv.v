@@ -13,16 +13,15 @@ module basediv(
 );
 reg [63:0] dividend;
 reg [31:0] divisor,qutient,remain;
-reg doing,op_signed,divisor_s,dividend_s;
+reg doing,divisor_s,dividend_s;
 reg [5:0] count;
-wire iterate_done,calculate_done,ready_to_doing,doing_to_done,done_to_ready;
+wire calculate_done,ready_to_doing,doing_to_done,done_to_ready;
 
 //state transition
 assign ready_to_doing = in_ready && in_valid;
 assign doing_to_done  =  calculate_done;
 assign done_to_ready  = out_valid;
 assign calculate_done = doing &&  count == 6'h20;
-assign iterate_done   = doing &&  count == 6'h1f;
 always @(posedge clk) begin
     if (reset  || done_to_ready) begin
         in_ready <= 1'b1;
@@ -33,37 +32,29 @@ always @(posedge clk) begin
 end
 
 always @(posedge clk) begin
-    if (reset ) begin
+    if (reset || doing_to_done ) begin
         doing <= 1'b0;
     end
     else if (ready_to_doing) begin
         doing <= 1'b1;
     end 
-    else if (doing_to_done) begin
-        doing <= 1'b0;
-    end
 end
 
 always @(posedge clk) begin
-    if (reset ) begin
+    if (reset || done_to_ready ) begin
         out_valid <= 1'b0;
     end
     else if (doing_to_done) begin
         out_valid <= 1'b1;
     end 
-    else if (done_to_ready) begin
-        out_valid <= 1'b0;
-    end
 end
-
+//signed bit
 always @(posedge clk) begin
     if (reset) begin
-        op_signed <= 1'b0;
         divisor_s <= 1'b0;
         dividend_s <= 1'b0;        
     end
     else if (ready_to_doing) begin
-        op_signed <= div_signed;
         divisor_s <= div_signed & y[31];
         dividend_s <= div_signed & x[31];
     end    
@@ -114,6 +105,7 @@ always @(posedge clk) begin
         dividend <= {32'b0,x_abs};
         divisor <= y_abs;
     end
+    //iterate and shift left  << 1
     else if (doing ) begin
        dividend <= sub_cout ? {sub_result[31:0],dividend[30:0],1'b0} : {dividend[62:0],1'b0};
     end
@@ -135,10 +127,8 @@ end
 wire qutient_need_correct,remain_need_correct;
 
 assign op_correct = calculate_done;
-
 assign remain_correct  = x_adder_result;
 assign qutient_correct = y_adder_result;
-
 assign qutient_need_correct = ~dividend_s & divisor_s | dividend_s & ~divisor_s;
 assign remain_need_correct  = dividend_s;
 
@@ -151,10 +141,9 @@ always @(posedge clk ) begin
     end 
     else if (doing) begin
         qutient <= {qutient[30:0],sub_cout};
-    end
-
-    
+    end    
 end
+// finally result
 assign s = qutient;
 assign r = remain;
 
