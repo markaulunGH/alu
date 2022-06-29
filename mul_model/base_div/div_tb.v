@@ -120,7 +120,7 @@ assign s_ok = s_ref==s;
 assign r_ok = r_ref==r;
 reg [5:0] time_out;
 
-////输出结果,将各 32 位(不论是有符号还是无符号数)扩展成 33 位有符号数，以便以 10 进制形式打印
+////输出结果,将各 32 位(不论是有符号还是无符号数)扩展成 33 位有符号数，以便以 16 进制形式打印
 wire signed [32:0] x_d     = {div_signed&x[31],x};
 wire signed [32:0] y_d     = {div_signed&y[31],y};
 wire signed [32:0] s_d     = {div_signed&s[31],s};
@@ -133,12 +133,12 @@ begin
     begin
 	     if (s_ok && r_ok)
 		  begin
-		      $display("[time@%t]: x=%d, y=%d, signed=%d, s=%d, r=%d, s_OK=%b, r_OK=%b",
+		      $display("[time@%t]: x=%x, y=%x, signed=%x, s=%x, r=%x, s_OK=%b, r_OK=%b",
                       $time,x_d,y_d,div_signed,s_d,r_d,s_ok,r_ok);
 		  end
 		  else
 		  begin
-		      $display("[time@%t]Error: x=%d, y=%d, signed=%d, s=%d, r=%d, s_ref=%d, r_ref=%d, s_OK=%b, r_OK=%b",
+		      $display("[time@%t]Error: x=%x, y=%x, signed=%x, s=%x, r=%x, s_ref=%x, r_ref=%x, s_OK=%b, r_OK=%b",
                       $time,x_d,y_d,div_signed,s_d,r_d,s_ref_d,r_ref_d,s_ok,r_ok);
 	         $finish;
 		  end
@@ -157,7 +157,7 @@ begin
 end
 always @(posedge div_clk)
 begin	    
-    if (time_out == 6'd34)
+    if (time_out == 6'd35)
 	 begin
 		  $display("Error: div no end in 34 clk!");
 		  $finish;

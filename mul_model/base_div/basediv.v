@@ -1,4 +1,4 @@
-module basemul(
+module basediv(
   input                          clk           ,
   input                          reset         ,
   input  [31:0] x,
@@ -21,8 +21,8 @@ wire iterate_done,calculate_done,ready_to_doing,doing_to_done,done_to_ready;
 assign ready_to_doing = in_ready && in_valid;
 assign doing_to_done  =  calculate_done;
 assign done_to_ready  = out_valid;
-assign calculate_done = doing &&  count == 6'h10;
-assign iterate_done   = doing &&  count == 6'h0f;
+assign calculate_done = doing &&  count == 6'h20;
+assign iterate_done   = doing &&  count == 6'h1f;
 always @(posedge clk) begin
     if (reset  || done_to_ready) begin
         in_ready <= 1'b1;
@@ -117,9 +117,7 @@ always @(posedge clk) begin
     else if (doing ) begin
        dividend <= sub_cout ? {sub_result[31:0],dividend[30:0],1'b0} : {dividend[62:0],1'b0};
     end
-    if (doing) begin
-        qutient <= {qutient[30:0],sub_cout};
-    end
+ 
     
 end
 // counter
@@ -127,7 +125,7 @@ always @(posedge clk) begin
     if (reset || done_to_ready ) begin
         count <= 6'b0;
     end
-    else if (ready_to_doing) begin
+    else if (doing) begin
         count <= count +1'b1;
     end
     
@@ -136,19 +134,26 @@ end
 //Correct result
 wire qutient_need_correct,remain_need_correct;
 
-assign op_correct = iterate_done;
+assign op_correct = calculate_done;
 
-assign qutient_correct = x_adder_result;
-assign remain_correct  = y_adder_result;
+assign remain_correct  = x_adder_result;
+assign qutient_correct = y_adder_result;
 
-assign qutient_need_correct = ~dividend_s & divisor_s | dividend_s & divisor_s;
+assign qutient_need_correct = ~dividend_s & divisor_s | dividend_s & ~divisor_s;
 assign remain_need_correct  = dividend_s;
 
 always @(posedge clk ) begin
     if (op_correct) begin
-        qutient <= qutient_need_correct ? qutient_correct : qutient; 
+       // qutient <= qutient_need_correct ? qutient_correct : qutient; 
         remain  <= remain_need_correct  ? remain_correct  : dividend[63:32];
     end
+   if (op_correct) begin
+        qutient <= qutient_need_correct ? qutient_correct : qutient;
+    end 
+    else if (doing) begin
+        qutient <= {qutient[30:0],sub_cout};
+    end
+
     
 end
 assign s = qutient;
@@ -177,7 +182,7 @@ module adder_33 (
     input [32:0] src2,
     input        cin,
     output       cout,
-    output [33:0] result
+    output [32:0] result
 );
 assign {cout, result} = src1 + src2 + {32'b0,cin};
 
