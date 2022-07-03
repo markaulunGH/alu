@@ -2,12 +2,12 @@ module boothmul# (parameter COMPUTER_WIDTH=32,parameter WIDTH =COMPUTER_WIDTH+2)
 (
   input               clk           ,
   input               reset         ,
-  input  [32:0] src1,
-  input  [32:0] src2,
+  input  [COMPUTER_WIDTH:0] src1,
+  input  [COMPUTER_WIDTH:0] src2,
   input         in_valid,
   output reg    in_ready,
   output reg    out_valid,
-  output [63:0] result
+  output [COMPUTER_WIDTH*2-1:0] result
 
 );
 //68bits
@@ -15,7 +15,6 @@ module boothmul# (parameter COMPUTER_WIDTH=32,parameter WIDTH =COMPUTER_WIDTH+2)
 //两位booth要补补够倍数
 reg [WIDTH*2-1:0] tem_result, multiplicand;
 reg [WIDTH:0] multiplier;
-reg [4:0]   count;
 reg doing;
 wire calculate_done,ready_to_doing,doing_to_done,done_to_ready;
 wire [WIDTH*2-1:0] mid_result;
@@ -25,7 +24,6 @@ wire [WIDTH*2-1:0] mid_result;
 assign ready_to_doing = in_valid && in_ready;
 assign doing_to_done  = calculate_done;
 assign done_to_ready  = out_valid;
-//assign result         = tem_result;
 always @(posedge clk) begin
     if (reset) begin
         in_ready<=1;
@@ -76,6 +74,7 @@ always @(posedge clk) begin
 end
 //update multiplier
 always @(posedge clk) begin
+    // lowest bit is 0
     if (ready_to_doing) begin
         multiplier <= {src1[COMPUTER_WIDTH],src1,1'b0};
     end
@@ -84,32 +83,19 @@ always @(posedge clk) begin
         multiplier <= {2'b0,multiplier[WIDTH:2]};
     end
 end
-//counter
-always @(posedge clk) begin
-    if (reset || ready_to_doing || done_to_ready) begin
-        count <= 5'h0;
-    end
-    else if (doing) begin
-        count <= count + 1'h1;
-    end
-end
-//The last operation is sub
-//Other operations are add
-assign calculate_done = count[4:0] == 5'h10 && doing;
-//assign mid_result = multiplicand & {66{multiplier[0]}};
+//Don't care about the lowest bit
+assign calculate_done = doing && multiplier[WIDTH+1:1] == {WIDTH{1'b0}};//
 wire partial_cout;
-wire double;
 booth_partial  #(.WIDTH (WIDTH))
 booth_partial   (
     .x_src  (multiplicand),
     .y_src   (multiplier[2:0]),
     .p_result (mid_result),
-    .double    (double),
     .cout      (partial_cout)
 );
 
 
-// 66-bit adder
+// WIDTH*2-bit adder
 wire [WIDTH*2-1:0] adder_a;
 wire [WIDTH*2-1:0] adder_b;
 wire [1:0]        adder_cin;

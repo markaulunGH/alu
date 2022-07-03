@@ -42,7 +42,6 @@ module booth_partial
   input [2*WIDTH-1:0]  x_src,
   input [2:0] y_src,
   output [2*WIDTH-1:0]   p_result,
-  output                double,
   output                cout 
 );
 
@@ -64,8 +63,6 @@ genvar x;
 generate for ( x =1;x<WIDTH*2;x=x+1) begin : gen_partial
     booth_result_sel partial(.sel (sel), .src (x_src[x:x-1]), .p (p_result[x]));
 end endgenerate
-//assign p_result[2*WIDTH-1:WIDTH] = {WIDTH{1'b0}};
-assign double = sel_double_negative ;
 
 endmodule
 
