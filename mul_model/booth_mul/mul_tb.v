@@ -45,7 +45,7 @@ always @(posedge mul_clk)
 begin
     x          <= $random;//32'h04000000;//
     y          <= $random;//32'hd0000000;// //$random为系统任务，产生一个随机的32位有符号数
-    mul_signed <= 1'b0;//{$random}%2; //加了拼接符，{$random}产生一个非负数，除2取余得到0或1
+    mul_signed <= {$random}%2; //加了拼接符，{$random}产生一个非负数，除2取余得到0或1
 end
 
 //寄存乘数和有符号乘控制信号，因为是两级流水，故存一拍
