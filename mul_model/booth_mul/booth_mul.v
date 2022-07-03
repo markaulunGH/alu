@@ -23,7 +23,7 @@ wire [65:0] mid_result;
 assign ready_to_doing = in_valid && in_ready;
 assign doing_to_done  = calculate_done;
 assign done_to_ready  = out_valid;
-assign result         = tem_result;
+//assign result         = tem_result;
 always @(posedge clk) begin
     if (reset) begin
         in_ready<=1;
@@ -68,9 +68,9 @@ always @(posedge clk) begin
         multiplicand <= {{33{src2[32]}},src2};
     end
     //shift left  << 2
-/*    else if (doing) begin
+    else if (doing) begin
         multiplicand <= {multiplicand[63:0],2'b0};
-    end*/
+    end
 end
 //update multiplier
 always @(posedge clk) begin
@@ -85,7 +85,7 @@ end
 //counter
 always @(posedge clk) begin
     if (reset || ready_to_doing || done_to_ready) begin
-        count <= 6'h0;
+        count <= 5'h0;
     end
     else if (doing) begin
         count <= count + 1'h1;
@@ -93,15 +93,17 @@ always @(posedge clk) begin
 end
 //The last operation is sub
 //Other operations are add
-assign calculate_done = count[5:0] == 6'h10 && doing;
-assign last_op        = count[5:0] == 6'h10 && doing;
-assign mid_result = multiplicand & {66{multiplier[0]}};
+assign calculate_done = count[4:0] == 5'h0f && doing;
+assign last_op        = count[4:0] == 5'h0f && doing;
+//assign mid_result = multiplicand & {66{multiplier[0]}};
 wire partial_cout;
+wire double;
 booth_partial  #(.WIDTH (33))
 booth_partial   (
     .x_src  (multiplicand),
     .y_src   (multiplier[2:0]),
     .p_result (mid_result),
+    .double    (double),
     .cout      (partial_cout)
 );
 
@@ -109,14 +111,14 @@ booth_partial   (
 // 66-bit adder
 wire [65:0] adder_a;
 wire [65:0] adder_b;
-wire         adder_cin;
+wire [1:0]        adder_cin;
 wire [65:0] adder_result;
 wire        adder_cout;
 
 assign adder_a   = mid_result;
 assign adder_b   = tem_result;
-assign adder_cin = partial_cout;
-assign {adder_cout, adder_result} = adder_a + adder_b + {65'b0,adder_cin};
+assign adder_cin = {1'b0,partial_cout};
+assign {adder_cout, adder_result} = adder_a + adder_b + {64'b0,adder_cin};
 
 // Temporary Results or Final Results
 always @(posedge clk) begin
@@ -175,7 +177,8 @@ module booth_partial
 (
   input [2*WIDTH-1:0]  x_src,
   input [2:0] y_src,
-  output [WIDTH-1:0]   p_result,
+  output [2*WIDTH-1:0]   p_result,
+  output                double,
   output                cout 
 );
 
@@ -194,9 +197,11 @@ booth_sel booth_sel(
 
 booth_result_sel partial0(.sel (sel), .src ({x_src[0],1'b0}), .p (p_result[0]));
 genvar x;
-generate for ( x =1;x<WIDTH;x=x+1) begin : gen_partial
+generate for ( x =1;x<WIDTH*2;x=x+1) begin : gen_partial
     booth_result_sel partial(.sel (sel), .src (x_src[x:x-1]), .p (p_result[x]));
 end endgenerate
+//assign p_result[2*WIDTH-1:WIDTH] = {WIDTH{1'b0}};
+assign double = sel_double_negative ;
 
 endmodule
 

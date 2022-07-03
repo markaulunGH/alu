@@ -43,9 +43,9 @@ module mul_tb;
 //产生随机乘数和有符号控制信号
 always @(posedge mul_clk)
 begin
-    x          <= $random;
-    y          <= $random; //$random为系统任务，产生一个随机的32位有符号数
-    mul_signed <= {$random}%2; //加了拼接符，{$random}产生一个非负数，除2取余得到0或1
+    x          <= $random;//32'h04000000;//
+    y          <= $random;//32'hd0000000;// //$random为系统任务，产生一个随机的32位有符号数
+    mul_signed <= 1'b1;//{$random}%2; //加了拼接符，{$random}产生一个非负数，除2取余得到0或1
 end
 
 //寄存乘数和有符号乘控制信号，因为是两级流水，故存一拍
@@ -74,10 +74,12 @@ end
 wire signed [63:0] result_ref;
 wire signed [32:0] x_e;
 wire signed [32:0] y_e;
+wire  [63:0] diff;
 assign x_e        = {mul_signed_r & x_r[31],x_r};
 assign y_e        = {mul_signed_r & y_r[31],y_r};
 assign result_ref = x_e * y_e;
 assign ok         = (result_ref == result);
+assign diff       = result_ref ^ result;
 
 //打印运算结果
 /*initial begin
@@ -89,7 +91,7 @@ always @(posedge mul_clk)
 begin
 	if (!ok && out_valid)
     begin
-	    $display("Error：x_r = %h, y_r = %h,result = %h, result_ref = %h, OK=%b",x_e,y_e,result,result_ref,ok);
+	    $display("Error：x_r = %h, y_r = %h,result = %h, result_ref = %h, OK=%b, diff=%h",x_e,y_e,result,result_ref,ok,diff);
 	    $finish;
 	end
 end

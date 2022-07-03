@@ -22,7 +22,6 @@ wire [65:0] mid_result;
 assign ready_to_doing = in_valid && in_ready;
 assign doing_to_done  = calculate_done;
 assign done_to_ready  = out_valid;
-assign result         = tem_result;
 always @(posedge clk) begin
     if (reset) begin
         in_ready<=1;
