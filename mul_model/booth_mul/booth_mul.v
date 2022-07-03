@@ -1,4 +1,5 @@
-module boothmul(
+module boothmul# (parameter COMPUTER_WIDTH=32,parameter WIDTH =COMPUTER_WIDTH+2)
+(
   input               clk           ,
   input               reset         ,
   input  [32:0] src1,
@@ -9,14 +10,15 @@ module boothmul(
   output [63:0] result
 
 );
-
-
-reg [65:0] tem_result, multiplicand;
-reg [33:0] multiplier;
+//68bits
+//32+1+1+1bits
+//两位booth要补补够倍数
+reg [WIDTH*2-1:0] tem_result, multiplicand;
+reg [WIDTH:0] multiplier;
 reg [4:0]   count;
 reg doing;
 wire calculate_done,ready_to_doing,doing_to_done,done_to_ready,last_op;
-wire [65:0] mid_result;
+wire [WIDTH*2-1:0] mid_result;
 
 //state transition  ; three states
 //in_ready,doing,done
@@ -65,21 +67,21 @@ end
 //update multiplicand
 always @(posedge clk) begin
     if (ready_to_doing ) begin
-        multiplicand <= {{33{src2[32]}},src2};
+        multiplicand <= {{WIDTH{src2[COMPUTER_WIDTH]}},src2};
     end
     //shift left  << 2
     else if (doing) begin
-        multiplicand <= {multiplicand[63:0],2'b0};
+        multiplicand <= {multiplicand[WIDTH*2-3:0],2'b0};
     end
 end
 //update multiplier
 always @(posedge clk) begin
     if (ready_to_doing) begin
-        multiplier <= {src1,1'b0};
+        multiplier <= {src1[COMPUTER_WIDTH],src1,1'b0};
     end
     //shift right >> 2
     else if (doing) begin 
-        multiplier[33:0] <= {2'b0,multiplier[33:2]};
+        multiplier <= {2'b0,multiplier[WIDTH:2]};
     end
 end
 //counter
@@ -93,12 +95,12 @@ always @(posedge clk) begin
 end
 //The last operation is sub
 //Other operations are add
-assign calculate_done = count[4:0] == 5'h0f && doing;
-assign last_op        = count[4:0] == 5'h0f && doing;
+assign calculate_done = count[4:0] == 5'h10 && doing;
+assign last_op        = count[4:0] == 5'h10 && doing;
 //assign mid_result = multiplicand & {66{multiplier[0]}};
 wire partial_cout;
 wire double;
-booth_partial  #(.WIDTH (33))
+booth_partial  #(.WIDTH (WIDTH))
 booth_partial   (
     .x_src  (multiplicand),
     .y_src   (multiplier[2:0]),
@@ -109,21 +111,21 @@ booth_partial   (
 
 
 // 66-bit adder
-wire [65:0] adder_a;
-wire [65:0] adder_b;
+wire [WIDTH*2-1:0] adder_a;
+wire [WIDTH*2-1:0] adder_b;
 wire [1:0]        adder_cin;
-wire [65:0] adder_result;
+wire [WIDTH*2-1:0] adder_result;
 wire        adder_cout;
 
 assign adder_a   = mid_result;
 assign adder_b   = tem_result;
 assign adder_cin = {1'b0,partial_cout};
-assign {adder_cout, adder_result} = adder_a + adder_b + {64'b0,adder_cin};
+assign {adder_cout, adder_result} = adder_a + adder_b + {{WIDTH*2-3{1'b0}},adder_cin};
 
 // Temporary Results or Final Results
 always @(posedge clk) begin
     if (ready_to_doing) begin
-        tem_result <=66'b0;
+        tem_result <={WIDTH*2-1{1'b0}};
     end
     else if (doing) begin
     tem_result <= adder_result;
