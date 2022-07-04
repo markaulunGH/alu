@@ -35,7 +35,7 @@ endmodule
 
 module booth_partial
 #(
-    parameter WIDTH = 4
+    parameter WIDTH = 34
 )
 
 (
