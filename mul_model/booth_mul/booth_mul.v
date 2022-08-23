@@ -16,14 +16,23 @@ module boothmul# (parameter COMPUTER_WIDTH=32,parameter WIDTH =COMPUTER_WIDTH+2)
 reg [WIDTH*2-1:0] tem_result, multiplicand;
 reg [WIDTH:0] multiplier;
 reg doing;
+reg [4:0] count;
 wire calculate_done,ready_to_doing,doing_to_done,done_to_ready;
 wire [WIDTH*2-1:0] mid_result;
 
 //state transition  ; three states
 //in_ready,doing,done
 assign ready_to_doing = in_valid && in_ready;
-assign doing_to_done  = calculate_done;
+assign doing_to_done  = doing && count == 5'h10;//calculate_done;//doing && multiplier[WIDTH:3] == {WIDTH-2{1'b0}};
 assign done_to_ready  = out_valid;
+always@(posedge clk) begin
+    if (reset|| ready_to_doing) begin
+        count <=5'b0;
+    end
+    else if (doing) begin
+        count <= count +1;
+    end
+end
 always @(posedge clk) begin
     if (reset) begin
         in_ready<=1;
@@ -84,7 +93,8 @@ always @(posedge clk) begin
     end
 end
 //Don't care about the lowest bit
-assign calculate_done = doing && multiplier[WIDTH+1:1] == {WIDTH{1'b0}};//
+assign calculate_done = doing && multiplier[WIDTH:1+2] == {WIDTH-2{1'b0}};//
+
 wire partial_cout;
 booth_partial  #(.WIDTH (WIDTH))
 booth_partial   (
@@ -116,6 +126,6 @@ always @(posedge clk) begin
     tem_result <= adder_result;
     end
 end
+//assign result = adder_result[63:0]; //tem_result[63:0];
 assign result = tem_result[63:0];
-
 endmodule

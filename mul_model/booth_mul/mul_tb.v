@@ -77,7 +77,7 @@ wire signed [32:0] y_e;
 wire  [63:0] diff;
 assign x_e        = {mul_signed_r & x_r[31],x_r};
 assign y_e        = {mul_signed_r & y_r[31],y_r};
-assign result_ref = x_e * y_e;
+assign result_ref = $signed(x_e) * $signed(y_e);
 assign ok         = (result_ref == result);
 assign diff       = result_ref ^ result;
 
