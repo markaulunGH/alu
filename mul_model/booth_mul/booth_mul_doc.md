@@ -149,3 +149,17 @@ module boothmul# (parameter COMPUTER_WIDTH=32,parameter WIDTH =COMPUTER_WIDTH+2)
 );
 ```
 
+修复计算错误bug；
+
+现象：在某些情况下迭代次数会多余`17`次，但是乘数是`34bits`的，如果乘数的低三位是`3'b111`或`3'b000`就不会出错，但结合实际第 17 次右移两位，肯定只会剩下至多一位为 1；所以在第 17 次移位的时候把乘数最低位置零即可。
+
+修复：增加一个计数器用于记录迭代次数，如果有第17次迭代，就把乘数的最低位置零。
+
+```
+//
+    //set lowest bit to zero    
+    else if (doing && count == 5'h10) begin
+         multiplier <= {2'b0,multiplier[WIDTH:3],1'b0};
+    end
+```
+
