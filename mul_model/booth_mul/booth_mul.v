@@ -23,7 +23,7 @@ wire [WIDTH*2-1:0] mid_result;
 //state transition  ; three states
 //in_ready,doing,done
 assign ready_to_doing = in_valid && in_ready;
-assign doing_to_done  = doing && count == 5'h10;//calculate_done;//doing && multiplier[WIDTH:3] == {WIDTH-2{1'b0}};
+assign doing_to_done  = calculate_done;
 assign done_to_ready  = out_valid;
 always@(posedge clk) begin
     if (reset|| ready_to_doing) begin
@@ -87,6 +87,10 @@ always @(posedge clk) begin
     if (ready_to_doing) begin
         multiplier <= {src1[COMPUTER_WIDTH],src1,1'b0};
     end
+    //set lowest bit to zero    
+    else if (doing && count == 5'h10) begin
+         multiplier <= {2'b0,multiplier[WIDTH:3],1'b0};
+    end
     //shift right >> 2
     else if (doing) begin 
         multiplier <= {2'b0,multiplier[WIDTH:2]};
@@ -126,6 +130,6 @@ always @(posedge clk) begin
     tem_result <= adder_result;
     end
 end
-//assign result = adder_result[63:0]; //tem_result[63:0];
-assign result = tem_result[63:0];
+assign result = adder_result[63:0];
+//assign result = tem_result[63:0];
 endmodule
